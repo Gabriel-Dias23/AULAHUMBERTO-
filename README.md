@@ -1,2 +1,0 @@
-# AULAHUMBERTO-
-QUESTÃO 1 
