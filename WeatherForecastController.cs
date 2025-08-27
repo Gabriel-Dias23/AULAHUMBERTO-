@@ -4,55 +4,54 @@ namespace MinhaApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class FreteController : ControllerBase
+    public class PessoaController : ControllerBase
     {
-        public class Produto
+        // Modelo para receber os dados
+        public class Pessoa
         {
             public string Nome { get; set; }
             public float Peso { get; set; }
             public float Altura { get; set; }
-            public float Largura { get; set; }
-            public float Comprimento { get; set; }
-            public string UF { get; set; }
         }
 
-        public class ResultadoFrete
+        // Modelo de resposta para o IMC
+        public class ResultadoIMC
         {
-            public string Produto { get; set; }
-            public float Volume { get; set; }
-            public float ValorFrete { get; set; }
+            public string Nome { get; set; }
+            public float IMC { get; set; }
+            public string Classificacao { get; set; }
         }
 
-        [HttpPost("calcular")]
-        public ActionResult<ResultadoFrete> CalcularFrete([FromBody] Produto produto)
+        // ------------------------------
+        // Ação 1: Calcular IMC
+        // ------------------------------
+        [HttpPost("calcular-imc")]
+        public ActionResult<ResultadoIMC> CalcularIMC([FromBody] Pessoa pessoa)
         {
-            if (produto == null || produto.Altura <= 0 || produto.Largura <= 0 || produto.Comprimento <= 0)
-                return BadRequest("Dados invÃ¡lidos");
+            if (pessoa == null || pessoa.Altura <= 0)
+                return BadRequest("Dados inválidos");
 
-            // 1) Calcular volume
-            float volume = produto.Altura * produto.Largura * produto.Comprimento;
+            float imc = pessoa.Peso / (pessoa.Altura * pessoa.Altura);
 
-            // 2) Taxa fixa por cmÂ³
-            float taxaPorCm3 = 0.01f;
-            float valorBase = volume * taxaPorCm3;
-
-            // 3) Taxa por estado
-            float taxaEstado = produto.UF.ToUpper() switch
+            return Ok(new ResultadoIMC
             {
-                "SP" => 50f,
-                "RJ" => 60f,
-                "MG" => 55f,
-                _ => 70f
-            };
-
-            float valorFinal = valorBase + taxaEstado;
-
-            return Ok(new ResultadoFrete
-            {
-                Produto = produto.Nome,
-                Volume = volume,
-                ValorFrete = valorFinal
+                Nome = pessoa.Nome,
+                IMC = imc,
+                Classificacao = ConsultarTabelaIMC(imc)
             });
+        }
+
+        // ------------------------------
+        // Ação 2: Consulta Tabela IMC
+        // ------------------------------
+        private string ConsultarTabelaIMC(float imc)
+        {
+            if (imc < 18.5) return "Abaixo do peso";
+            else if (imc < 24.9) return "Peso normal";
+            else if (imc < 29.9) return "Sobrepeso";
+            else if (imc < 34.9) return "Obesidade grau I";
+            else if (imc < 39.9) return "Obesidade grau II";
+            else return "Obesidade grau III (mórbida)";
         }
     }
 }
